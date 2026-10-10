@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Laut Biru — MPI Darsana (Sad Darsana)</title>
+  <style>
+    :root{
+      --bg1:#031a3a;     /* navy */
+      --bg2:#034a8a;     /* biru laut */
+      --bg3:#0aa6ff;     /* biru terang */
+      --card: rgba(255,255,255,.08);
+      --card2: rgba(255,255,255,.12);
+      --text: #eaf6ff;
+      --muted: rgba(234,246,255,.78);
+      --accent:#6be6ff;
+      --good:#30e39b;
+      --warn:#ffd166;
+      --bad:#ff5c7a;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+      --ring: 0 0 0 3px rgba(107,230,255,.35);
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 600px at 20% 10%, rgba(10,166,255,.35), transparent 55%),
+        radial-gradient(900px 500px at 80% 20%, rgba(107,230,255,.25), transparent 60%),
+        linear-gradient(180deg, var(--bg1), var(--bg2) 55%, #01223f 100%);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    /* --- Decorative sea waves --- */
+    .waves{
+      position:fixed;
+      inset:auto 0 0 0;
+      height:180px;
+      pointer-events:none;
+      z-index:-1;
+      opacity:.9;
+      background:
+        radial-gradient(80px 50px at 10% 70%, rgba(107,230,255,.35), transparent 70%),
+        radial-gradient(100px 60px at 30% 65%, rgba(10,166,255,.25), transparent 72%),
+        radial-gradient(130px 70px at 55% 75%, rgba(107,230,255,.28), transparent 70%),
+        radial-gradient(120px 65px at 80% 70%, rgba(10,166,255,.22), transparent 72%);
+    }
+    .waves:before, .waves:after{
+      content:"";
+      position:absolute; left:-10%; right:-10%;
+      height:100px; top:10px;
+      background:
+        repeating-linear-gradient(
+          -12deg,
+          rgba(255,255,255,.08) 0px,
+          rgba(255,255,255,.08) 10px,
+          transparent 10px,
+          transparent 28px
+        );
+      filter: blur(0.5px);
+      opacity:.35;
+      transform: translateX(var(--shift,0px));
+      animation: drift 7s linear infinite;
+    }
+    .waves:after{
+      top:45px;
+      opacity:.25;
+      animation-duration: 11s;
+    }
+    @keyframes drift{
+      0%{ transform: translateX(-60px); }
+      100%{ transform: translateX(60px); }
+    }
+
+    /* Layout */
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding: 24px 16px 80px;
+    }
+
+    header{
+      display:flex;
+      gap:16px;
+      align-items:flex-start;
+      justify-content:space-between;
+      margin-bottom: 18px;
+    }
+    .brand{
+      display:flex; gap:14px; align-items:center;
+    }
+    .logo{
+      width:52px; height:52px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(107,230,255,.35), rgba(10,166,255,.18));
+      box-shadow: var(--shadow);
+      display:grid; place-items:center;
+      border:1px solid rgba(107,230,255,.35);
+    }
+    .logo span{
+      font-size:26px;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.25));
+    }
+    .brand h1{
+      margin:0;
+      font-size: 20px;
+      letter-spacing:.2px;
+    }
+    .brand p{
+      margin:4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.4;
+    }
+
+    /* Nav */
+    nav{
+      position:sticky;
+      top:14px;
+      z-index:10;
+      background: rgba(0,0,0,.15);
+      backdrop-filter: blur(10px);
+      border:1px solid rgba(107,230,255,.2);
+      border-radius: 999px;
+      padding: 8px;
+      display:flex; flex-wrap:wrap;
+      gap:6px;
+      justify-content:flex-end;
+    }
+    nav button{
+      border:0;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      transition: .2s;
+      font-weight: 650;
+      font-size: 13px;
+    }
+    nav button:hover{ color: var(--text); background: rgba(255,255,255,.06); }
+    nav button.active{ color: var(--text); background: rgba(107,230,255,.16); box-shadow: 0 0 0 2px rgba(107,230,255,.22) inset; }
+
+    /* Sections */
+    .section{
+      display:none;
+      animation: fadeIn .25s ease-in-out;
+    }
+    .section.active{ display:block; }
+    @keyframes fadeIn{
+      from{ opacity:0; transform: translateY(6px); }
+      to{ opacity:1; transform: translateY(0); }
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 14px;
+      margin-top: 16px;
+    }
+    @media(max-width: 900px){
+      .grid{ grid-template-columns:1fr; }
+      nav{ justify-content:flex-start; border-radius: 20px; }
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .card h2{
+      margin:0 0 10px;
+      font-size: 18px;
+      letter-spacing:.2px;
+    }
+    .card p{ margin: 8px 0; color: var(--muted); line-height:1.65; }
+    .pillRow{ display:flex; flex-wrap:wrap; gap:8px; margin-top: 10px; }
+    .pill{
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.12);
+      color: var(--muted);
+      font-weight: 650;
+      font-size: 13px;
+    }
+    .pill strong{ color: var(--text); }
+
+    .btnRow{ display:flex; flex-wrap:wrap; gap:10px; margin-top: 12px; }
+    button.primary{
+      border:1px solid rgba(107,230,255,.35);
+      background: linear-gradient(135deg, rgba(10,166,255,.35), rgba(107,230,255,.15));
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 800;
+      letter-spacing:.2px;
+      transition: .2s;
+      box-shadow: 0 10px 24px rgba(0,0,0,.18);
+    }
+    button.primary:hover{ transform: translateY(-1px); box-shadow: 0 14px 28px rgba(0,0,0,.22); }
+    button.ghost{
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 800;
+      transition: .2s;
+    }
+    button.ghost:hover{ background: rgba(255,255,255,.09); transform: translateY(-1px); }
+    button:focus{ outline:none; box-shadow: var(--ring); }
+
+    /* Table */
+    table{
+      width:100%;
+      border-collapse: collapse;
+      overflow:hidden;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.10);
+    }
+    th, td{
+      padding: 10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      vertical-align: top;
+      font-size: 13px;
+      line-height:1.4;
+    }
+    th{
+      background: rgba(107,230,255,.12);
+      color: var(--text);
+      text-align:left;
+      font-weight: 900;
+    }
+    tr:last-child td{ border-bottom:0; }
+
+    /* Quest / Mini game */
+    .questHeader{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    }
+    .scoreBox{
+      min-width: 260px;
+      background: var(--card2);
+      border: 1px solid rgba(107,230,255,.25);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .scoreBox .big{
+      font-size: 26px; font-weight: 1000;
+      margin: 4px 0 0;
+      color: #d9fbff;
+    }
+    .scoreBox .small{ color: var(--muted); font-weight: 700; font-size: 13px; }
+
+    .subTitle{
+      margin: 6px 0 10px;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .mazeArea{
+      display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap;
+      margin-top: 10px;
+    }
+    .lake{
+      flex: 1;
+      min-width: 320px;
+      height: 280px;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.14);
+      background:
+        radial-gradient(120px 70px at 20% 30%, rgba(107,230,255,.25), transparent 70%),
+        radial-gradient(140px 80px at 80% 50%, rgba(10,166,255,.20), transparent 72%),
+        linear-gradient(180deg, rgba(0,0,0,.06), rgba(0,0,0,.18));
+      position:relative;
+      overflow:hidden;
+    }
+    .path{
+      position:absolute; inset: 14px;
+      border-radius: 14px;
+      border:1px dashed rgba(107,230,255,.35);
+    }
+    .bubble{
+      position:absolute;
+      width: 54px; height: 54px;
+      border-radius: 50%;
+      background: rgba(107,230,255,.14);
+      border:1px solid rgba(107,230,255,.25);
+      display:grid; place-items:center;
+      font-weight: 1000;
+      color: #e9fdff;
+      cursor:pointer;
+      transition: .15s;
+      user-select:none;
+      box-shadow: 0 12px 25px rgba(0,0,0,.18);
+    }
+    .bubble:hover{ transform: translateY(-2px) scale(1.03); }
+    .bubble small{ display:block; font-size: 11px; margin-top:2px; color: rgba(234,246,255,.8); font-weight: 800; }
+
+    .bubble.correct{
+      outline: 3px solid rgba(48,227,155,.35);
+      background: rgba(48,227,155,.12);
+    }
+    .bubble.wrong{
+      outline: 3px solid rgba(255,92,122,.35);
+      background: rgba(255,92,122,.10);
+    }
+
+    .infoSide{
+      flex: .7;
+      min-width: 300px;
+    }
+
+    .flash{
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      padding: 12px;
+      margin-top: 12px;
+      color: var(--muted);
+      line-height:1.6;
+      font-weight: 650;
+      font-size: 13px;
+      min-height: 86px;
+    }
+    .flash.good{ color: rgba(48,227,155,.95); border-color: rgba(48,227,155,.35); background: rgba(48,227,155,.10); }
+    .flash.bad{ color: rgba(255,92,122,.95); border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10); }
+    .flash.warn{ color: rgba(255,209,102,.95); border-color: rgba(255,209,102,.35); background: rgba(255,209,102,.10); }
+
+    /* Quiz */
+    .quizList{
+      display:grid; gap: 12px;
+      margin-top: 12px;
+    }
+    .qCard{
+      padding: 12px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+    }
+    .qCard .qTop{
+      display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;
+    }
+    .qCard .qTitle{
+      font-weight: 950; letter-spacing:.2px;
+    }
+    .options{
+      margin-top: 10px;
+      display:grid; gap:8px;
+    }
+    .opt{
+      display:flex; gap:10px; align-items:flex-start;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.10);
+      cursor:pointer;
+    }
+    .opt input{ margin-top:3px; }
+    .opt:hover{ border-color: rgba(107,230,255,.32); background: rgba(107,230,255,.10); }
+    .feedback{
+      margin-top: 10px;
+      font-weight: 900;
+      font-size: 13px;
+      padding: 10px;
+      border-radius: 12px;
+      border:1px dashed rgba(255,255,255,.18);
+      color: var(--muted);
+    }
+    .feedback.good{ color: rgba(48,227,155,.98); border-color: rgba(48,227,155,.35); background: rgba(48,227,155,.10); }
+    .feedback.bad{ color: rgba(255,92,122,.98); border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10); }
+    .feedback.warn{ color: rgba(255,209,102,.98); border-color: rgba(255,209,102,.35); background: rgba(255,209,102,.10); }
+
+    /* Footer */
+    .footerNote{
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.6;
+    }
+
+    /* Small screens adjustments for bubbles positions */
+    .b1{ left: 8%; top: 25%; }
+    .b2{ left: 35%; top: 12%; }
+    .b3{ left: 62%; top: 30%; }
+    .b4{ left: 18%; top: 58%; }
+    .b5{ left: 46%; top: 54%; }
+    .b6{ left: 72%; top: 58%; }
+
+    @media(max-width: 520px){
+      .lake{ min-width: 260px; }
+      .b1{ left: 6%; top: 24%; }
+      .b2{ left: 32%; top: 10%; }
+      .b3{ left: 58%; top: 28%; }
+      .b4{ left: 10%; top: 60%; }
+      .b5{ left: 42%; top: 58%; }
+      .b6{ left: 68%; top: 62%; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="waves"></div>
+
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"><span>🐚</span></div>
+        <div>
+          <h1>🌊 MPI Darsana — Laut Biru & Sad Darsana</h1>
+          <p>
+            Tema biru (laut) • Materi sesuai LKPD: <b>Darsana</b> & <b>Sad Darsana</b> (6 sistem filsafat Hindu) •
+            Ada mini game + kuis + skor.
+          </p>
+        </div>
+      </div>
+
+      <nav aria-label="Navigasi MPI">
+        <button class="navBtn active" data-target="beranda">🏝️ Beranda</button>
+        <button class="navBtn" data-target="petunjuk">📘 Petunjuk</button>
+        <button class="navBtn" data-target="tujuan">🎯 Tujuan</button>
+        <button class="navBtn" data-target="peta">🗺️ Peta Sad Darsana</button>
+        <button class="navBtn" data-target="materi">🧠 Materi Sad Darsana</button>
+        <button class="navBtn" data-target="finalQuest">🎮 Final Quest</button>
+        <button class="navBtn" data-target="skor">🏁 Hasil / Skor</button>
+        <button class="navBtn" data-target="refleksi">📝 Refleksi</button>
+      </nav>
+    </header>
+
+    <!-- ================= BERANDA ================= -->
+    <section id="beranda" class="section active">
+      <div class="grid">
+        <div class="card">
+          <h2>🏝️ Beranda: Selamat Datang di Laut Biru Darsana</h2>
+          <p>
+            Om Swastyastu 🙏 <br/>
+            Mari belajar Darsana dengan cara yang <b>berkesadaran, bermakna, dan menyenangkan</b>.
+            Kamu akan menjelajah 6 sistem filsafat Hindu (Sad Darsana) dan menguji pemahamanmu lewat mini game dan kuis.
+          </p>
+          <div class="pillRow">
+            <div class="pill"><strong>Darsana</strong> = cara pandang melihat realitas</div>
+            <div class="pill"><strong>Sad Darsana</strong> = 6 sistem filsafat</div>
+            <div class="pill"><strong>Mini Game</strong> + <strong>Kuis</strong></div>
+          </div>
+
+          <div class="btnRow">
+            <button class="primary" onclick="goTo('petunjuk')">Mulai Jelajah 🚀</button>
+            <button class="ghost" onclick="goTo('finalQuest')">Langsung Main 🎮</button>
+          </div>
+          <p class="footerNote">
+            🔎 Tips: Baca petunjuk dulu supaya tombol & navigasi tidak ada yang terlewat (sesuai instruksi LKPD).
+          </p>
+        </div>
+
+        <div class="card">
+          <h2>📌 Identitas MPI (ganti sesuai kelompok)</h2>
+          <p>
+            <b>Kelompok:</b> ……………… <br/>
+            <b>Kelas:</b> XI / Fase F <br/>
+            <b>Mapel:</b> Pendidikan Agama Hindu & Budi Pekerti <br/>
+            <b>Institusi:</b> SMA Negeri 1 Gianyar <br/>
+            <b>Tahun:</b> 2026 <br/>
+            <b>Platform:</b> HTML (Offline)
+          </p>
+          <p class="footerNote">
+            ✍️ Pastikan daftar sumber dicantumkan (bagian refleksi/credit bisa kamu edit bila perlu).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PETUNJUK ================= -->
+    <section id="petunjuk" class="section">
+      <div class="grid">
+        <div class="card">
+          <h2>📘 Petunjuk Penggunaan</h2>
+          <p>
+            1) Klik tombol navigasi sesuai alur. <br/>
+            2) Baca materi ringkas per sistem filsafat. <br/>
+            3) Main <b>Final Quest</b> (mini game) untuk mendapatkan poin. <br/>
+            4) Kerjakan <b>Kuis Sad Darsana</b> dan cek skor. <br/>
+            5) Tulis refleksi sesuai pengalaman belajarmu.
+          </p>
+          <div class="pillRow">
+            <div class="pill">✅ Navigasi mudah</div>
+            <div class="pill">✅ Kuis + umpan balik</div>
+            <div class="pill">✅ Skor tampil otomatis</div>
+            <div class="pill">✅ Materi sesuai LKPD</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>🫧 Mode Fokus (Berkesadaran)</h2>
+          <p>
+            Sebelum mulai: tarik napas perlahan 2–3 kali. <br/>
+            Lalu pilih jawaban dengan tenang—karena Darsana mengajarkan cara berpikir yang sadar.
+          </p>
+          <div class="btnRow">
+            <button class="primary" onclick="goTo('tujuan')">Lanjut Tujuan 🎯</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TUJUAN ================= -->
+    <section id="tujuan" class="section">
+      <div class="card">
+        <h2>🎯 Tujuan Pembelajaran (sesuai LKPD)</h2>
+        <p>
+          Setelah mengikuti pembelajaran, peserta didik diharapkan mampu:
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Tujuan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>Menjelaskan pengertian Darsana sebagai sistem filsafat Hindu</td></tr>
+            <tr><td>2</td><td>Menjelaskan tujuan mempelajari Darsana</td></tr>
+            <tr><td>3</td><td>Mengidentifikasi enam sistem filsafat Hindu (Sad Darsana)</td></tr>
+            <tr><td>4</td><td>Menghubungkan pemikiran Darsana dengan kehidupan sehari-hari</td></tr>
+            <tr><td>5</td><td>Merancang dan menghasilkan MPI tentang Darsana</td></tr>
+            <tr><td>6</td><td>Mempresentasikan hasil karya MPI dan menerima umpan balik</td></tr>
+            <tr><td>7</td><td>Refleksi nilai Darsana dalam kehidupan sehari-hari</td></tr>
+          </tbody>
+        </table>
+
+        <div class="btnRow" style="margin-top:14px;">
+          <button class="primary" onclick="goTo('peta')">Lihat Peta Sad Darsana 🗺️</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PETA ================= -->
+    <section id="peta" class="section">
+      <div class="grid">
+        <div class="card">
+          <h2>🗺️ Peta Konsep: Darsana → Sad Darsana</h2>
+          <p>
+            Darsana adalah sistem filsafat yang “melihat” realitas secara mendalam.
+            Dalam tradisi Hindu terdapat <b>Sad Darsana</b> yaitu:
+          </p>
+          <div class="pillRow">
+            <div class="pill">Nyaya</div>
+            <div class="pill">Vaiseshika</div>
+            <div class="pill">Samkhya</div>
+            <div class="pill">Yoga</div>
+            <div class="pill">Mimamsa</div>
+            <div class="pill">Vedanta</div>
+          </div>
+
+          <p style="margin-top:12px;">
+            📌 Tugas kreatif: di kolom peta, kamu bebas mengaitkan setiap darsana dengan satu contoh sikap dalam hidupmu.
+            (Nanti bagian refleksi akan menguatkan itu.)
+          </p>
+          <div class="btnRow">
+            <button class="primary" onclick="goTo('materi')">Mulai Materi 🧠</button>
+            <button class="ghost" onclick="goTo('finalQuest')">Skip ke Quest 🎮</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>🧩 Konsep Utama (ringkas)</h2>
+          <table>
+            <thead>
+              <tr><th>Darsana</th><th>Konsep Utama</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Nyaya</td><td>Logika & penalaran untuk pengetahuan benar</td></tr>
+              <tr><td>Vaiseshika</td><td>Kategori realitas & cara mengkaji secara sistematis</td></tr>
+              <tr><td>Samkhya</td><td>Purusa (kesadaran) & Prakrti (materi/alam)</td></tr>
+              <tr><td>Yoga</td><td>Disiplin, pengendalian diri, konsentrasi & meditasi</td></tr>
+              <tr><td>Mimamsa</td><td>Weda, kewajiban, pelaksanaan tindakan keagamaan</td></tr>
+              <tr><td>Vedanta</td><td>Atman-Brahman, realitas tertinggi & pembebasan (Upanisad)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MATERI SAD DARSANA ================= -->
+    <section id="materi" class="section">
+      <div class="card">
+        <h2>🧠 Materi Sad Darsana (Ringkas & padat)</h2>
+        <p>
+          Bagian ini merangkum materi LKPD. Kamu bisa gunakan sebagai “laut rujukan” sebelum main kuis.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Darsana</th>
+              <th>Tokoh</th>
+              <th>Fokus Pemikiran</th>
+              <th>Penerapan (contoh)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Nyaya</b></td>
+              <td>Rsi Gautama / Aksapada Gautama</td>
+              <td>Logika, penalaran, dan pengetahuan yang benar</td>
+              <td>Sebelum percaya info medsos: periksa sumber, bukti, alasan</td>
+            </tr>
+            <tr>
+              <td><b>Vaiseshika</b></td>
+              <td>Rsi Kanada</td>
+              <td>Kategori realitas & kajian sistematis</td>
+              <td>Mengelompokkan & mengidentifikasi objek/fenomena saat penelitian</td>
+            </tr>
+            <tr>
+              <td><b>Samkhya</b></td>
+              <td>Rsi Kapila</td>
+              <td>Purusa & Prakrti (kesadaran vs materi/alam)</td>
+              <td>Menyadari kehidupan tak hanya material, tapi juga kesadaran</td>
+            </tr>
+            <tr>
+              <td><b>Yoga</b></td>
+              <td>Rsi Patanjali</td>
+              <td>Disiplin & pengendalian diri untuk keadaan spiritual lebih tinggi</td>
+              <td>Latih pengendalian pikiran, emosi, konsentrasi, refleksi</td>
+            </tr>
+            <tr>
+              <td><b>Mimamsa</b></td>
+              <td>Rsi Jaimini</td>
+              <td>Weda, kewajiban, pelaksanaan tindakan keagamaan</td>
+              <td>Tanggung jawab: belajar sungguh-sungguh, hormat orang tua/guru</td>
+            </tr>
+            <tr>
+              <td><b>Vedanta</b></td>
+              <td>Badarayana & pemikir Vedanta (berkaitan Upanisad)</td>
+              <td>Realitas tertinggi, Atman, Brahman, pembebasan</td>
+              <td>Refleksi hakikat diri & tujuan hidup</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="btnRow" style="margin-top:14px;">
+          <button class="primary" onclick="goTo('finalQuest')">🎮 Final Quest (Main + Kuis)</button>
+          <button class="ghost" onclick="goTo('refleksi')">📝 Refleksi dulu?</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FINAL QUEST (Mini game + Kuis) ================= -->
+    <section id="finalQuest" class="section">
+      <div class="card">
+        <div class="questHeader">
+          <div>
+            <h2>🎮 Final Quest: Berenang Menyusuri Sad Darsana</h2>
+            <div class="subTitle">Mini game + kuis gabungan. Raih skor dan buka hasilmu! 🐠</div>
+          </div>
+
+          <div class="scoreBox">
+            <div class="small">Skor Saat Ini</div>
+            <div class="big" id="scoreBig">0</div>
+            <div class="small" id="scoreNote">Kumpulkan poin dari Mini Game & Kuis</div>
+          </div>
+        </div>
+
+        <div class="mazeArea">
+          <!-- MINI GAME -->
+          <div class="lake" aria-label="Mini game: pilih gelembung sesuai kategori">
+            <div class="path" aria-hidden="true"></div>
+
+            <!-- bubble choices: click to answer "Konsep Utama" matching -->
+            <div class="bubble b1" data-bubble="nyaya">
+              🔎 Nyaya
+              <small>Logika</small>
+            </div>
+            <div class="bubble b2" data-bubble="vaiseshika">
+              🧱 Vaiseshika
+              <small>Kategori</small>
+            </div>
+            <div class="bubble b3" data-bubble="samkhya">
+              🌊 Samkhya
+              <small>Purusa-Prakrti</small>
+            </div>
+            <div class="bubble b4" data-bubble="yoga">
+              🧘 Yoga
+              <small>Disiplin</small>
+            </div>
+            <div class="bubble b5" data-bubble="mimamsa">
+              📜 Mimamsa
+              <small>Kewajiban</small>
+            </div>
+            <div class="bubble b6" data-bubble="vedanta">
+              ✨ Vedanta
+              <small>Atman-Brahman</small>
+            </div>
+          </div>
+
+          <div class="infoSide">
+            <h3 style="margin:0 0 8px;">🧭 Tantangan Mini Game</h3>
+            <p style="margin:0;color:var(--muted);line-height:1.6;font-weight:700;">
+              <b>Soal 1:</b> Kamu menerima informasi medsos. Sistem filsafat yang paling tepat untuk membantu berpikir logis adalah…
+            </p>
+            <div class="flash warn" id="miniFlash">
+              Klik gelembung yang sesuai! (Nyaya itu fokus pada logika & penalaran)
+            </div>
+
+            <div class="btnRow" style="margin-top:10px;">
+              <button class="primary" onclick="nextMiniGame()">Lanjut Soal Mini Game ➡️</button>
+              <button class="ghost" onclick="resetQuest()">Reset Quest 🔄</button>
+            </div>
+
+            <p class="footerNote">
+              🎯 Mini game ini mendukung materi LKPD: Nyaya (logika & penalaran).
+            </p>
+          </div>
+        </div>
+
+        <!-- QUIZ -->
+        <div class="card" style="margin-top:14px; background: rgba(0,0,0,.10); border-color: rgba(255,255,255,.16);">
+          <h2 style="margin-top:0;">🧠 Kuis Sad Darsana (Minimal 5 soal sesuai LKPD)</h2>
+          <p style="margin-top:6px;">
+            Pilih jawaban yang paling tepat. Setelah klik <b>Submit Kuis</b>, kamu akan dapat umpan balik & skor.
+          </p>
+
+          <form id="quizForm">
+            <div class="quizList" id="quizList"></div>
+
+            <div class="btnRow">
+              <button type="button" class="primary" onclick="submitQuiz()">✅ Submit Kuis</button>
+              <button type="button" class="ghost" onclick="clearQuiz()">🧹 Bersihkan Jawaban</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="btnRow" style="margin-top:14px;">
+          <button class="primary" onclick="goTo('skor')">🏁 Lihat Skor</button>
+          <button class="ghost" onclick="goTo('refleksi')">📝 Refleksi</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SKOR ================= -->
+    <section id="skor" class="section">
+      <div class="grid">
+        <div class="card">
+          <h2>🏁 Hasil / Skor</h2>
+          <p id="finalResultText" style="margin-top:6px;">
+            Skor akhir akan muncul setelah kamu bermain dan mengerjakan kuis.
+          </p>
+
+          <table style="margin-top:12px;">
+            <thead>
+              <tr>
+                <th>Komponen</th>
+                <th>Poin</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Mini Game</td><td id="miniScoreCell">0</td></tr>
+              <tr><td>Kuis</td><td id="quizScoreCell">0</td></tr>
+              <tr><td><b>Total</b></td><td><b id="totalScoreCell">0</b></td></tr>
+            </tbody>
+          </table>
+
+          <div class="btnRow" style="margin-top:14px;">
+            <button class="primary" onclick="goTo('finalQuest')">🎮 Main Lagi / Perbaiki</button>
+            <button class="ghost" onclick="goTo('refleksi')">📝 Tulis Refleksi</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>⭐ Interpretasi Skor (ringkas)</h2>
+          <p>
+            <b>0–7:</b> Perlu baca ulang materi. Fokus pada konsep utama setiap darsana. 🌊<br/>
+            <b>8–14:</b> Sudah paham dasar. Tingkatkan dengan menghubungkan ke contoh nyata. 🧠<br/>
+            <b>15–20:</b> Mantap! Kamu bisa jelaskan dengan percaya diri dan berpikir kritis. ✨
+          </p>
+          <p class="footerNote">
+            (Skor ini mengikuti rancangan kuis pada halaman ini—bisa kamu edit jika perlu.)
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= REFLEKSI ================= -->
+    <section id="refleksi" class="section">
+      <div class="grid">
+        <div class="card">
+          <h2>📝 Refleksi Pembelajaran Mendalam</h2>
+          <p>Isi jujur berdasarkan pengalamanmu. (Bisa ditempel langsung ke LKPD atau dikumpulkan ke guru.)</p>
+
+          <div style="display:grid; gap:10px; margin-top:12px;">
+            <label class="qCard" style="cursor:pointer;">
+              <div class="qTitle">1) Apa pengetahuan baru yang saya peroleh?</div>
+              <textarea id="ref1" style="width:100%; min-height:70px; margin-top:10px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background: rgba(0,0,0,.10); color:var(--text); padding:10px; resize:vertical;"></textarea>
+            </label>
+
+            <label class="qCard" style="cursor:pointer;">
+              <div class="qTitle">2) Materi Darsana apa yang paling bermakna bagi saya? Mengapa?</div>
+              <textarea id="ref2" style="width:100%; min-height:70px; margin-top:10px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background: rgba(0,0,0,.10); color:var(--text); padding:10px; resize:vertical;"></textarea>
+            </label>
+
+            <label class="qCard" style="cursor:pointer;">
+              <div class="qTitle">3) Darsana mana yang paling menarik bagi saya?</div>
+              <textarea id="ref3" style="width:100%; min-height:70px; margin-top:10px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background: rgba(0,0,0,.10); color:var(--text); padding:10px; resize:vertical;"></textarea>
+            </label>
+
+            <label class="qCard" style="cursor:pointer;">
+              <div class="qTitle">4) Satu nilai Darsana yang akan saya terapkan dalam kehidupan adalah…</div>
+              <textarea id="ref4" style="width:100%; min-height:70px; margin-top:10px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background: rgba(0,0,0,.10); color:var(--text); padding:10px; resize:vertical;"></textarea>
+            </label>
+          </div>
+
+          <div class="btnRow" style="margin-top:14px;">
+            <button class="primary" onclick="downloadReflection()">⬇️ Simpan Refleksi (teks)</button>
+            <button class="ghost" onclick="goTo('beranda')">🏝️ Kembali ke Beranda</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>📚 Daftar Sumber (sesuai LKPD)</h2>
+          <p>
+            Gunakan sumber belajar terpercaya seperti:
+            <br/>• Buku Pendidikan Agama Hindu dan Budi Pekerti kelas XI
+            <br/>• Materi ringkasan Darsana pada LKPD “DARSANA – SISTEM FILSAFAT HINDU”
+            <br/>• Referensi filsafat Hindu (Sad Darsana) dari sumber akademik
+          </p>
+
+          <div class="flash good" style="margin-top:12px;">
+            ✅ Pastikan: materi MPI tidak ada kesalahan penulisan nama sistem (Nyaya, Vaiseshika, Samkhya, Yoga, Mimamsa, Vedanta).
+          </div>
+
+          <p class="footerNote">
+            Om Santih, Santih, Santih, Om 🙏
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // ===================== Navigation =====================
+    const sections = ["beranda","petunjuk","tujuan","peta","materi","finalQuest","skor","refleksi"];
+    const navButtons = document.querySelectorAll(".navBtn");
+
+    function goTo(id){
+      sections.forEach(s=>{
+        document.getElementById(s).classList.remove("active");
+      });
+      document.getElementById(id).classList.add("active");
+      navButtons.forEach(b=>{
+        b.classList.toggle("active", b.dataset.target === id);
+      });
+      // If user goes to score, update it
+      if(id === "skor") updateScoreUI();
+      window.scrollTo({top:0, behavior:"smooth"});
+    }
+
+    navButtons.forEach(btn=>{
+      btn.addEventListener("click", ()=> goTo(btn.dataset.target));
+    });
+
+    // ===================== Quest (Mini Game) =====================
+    let miniState = {
+      questionIndex: 0,
+      score: 0,
+      answered: false
+    };
+
+    // Mini questions aligned to LKPD concept (we keep it simple & correct)
+    const miniQuestions = [
+      {
+        prompt: "Soal 1: Kamu menerima informasi medsos. Sistem filsafat yang paling tepat untuk membantu berpikir logis adalah…",
+        correct: "nyaya",
+        correctText: "Nyaya = logika & penalaran untuk pengetahuan benar."
+      }
+    ];
+
+    const miniFlash = document.getElementById("miniFlash");
+
+    // handle bubble clicks
+    const bubbles = document.querySelectorAll(".bubble");
+    bubbles.forEach(b=>{
+      b.addEventListener("click", ()=>{
+        if(miniState.answered) return;
+
+        const choice = b.dataset.bubble;
+        const q = miniQuestions[miniState.questionIndex];
+        miniState.answered = true;
+
+        // remove previous outlines
+        bubbles.forEach(x=>{
+          x.classList.remove("correct","wrong");
+        });
+
+        if(choice === q.correct){
+          b.classList.add("correct");
+          miniFlash.className = "flash good";
+          miniFlash.innerHTML = `✅ Benar! ${q.correctText} (+2 poin)`;
+          miniState.score += 2;
+          syncScoreBig();
+        } else {
+          b.classList.add("wrong");
+          // highlight correct one subtly
+          const correctBubble = document.querySelector(`[data-bubble="${q.correct}"]`);
+          if(correctBubble) correctBubble.classList.add("correct");
+          miniFlash.className = "flash bad";
+          miniFlash.innerHTML = `❌ Belum tepat. Yang benar: <b>${correctBubble.textContent.trim().split("\n")[0]}</b>. ${q.correctText} (+0 poin)`;
+        }
+      });
+    });
+
+    function nextMiniGame(){
+      // only one mini question in this draft; expand later if you want
+      miniState.questionIndex++;
+      miniState.answered = false;
+
+      // reset outlines
+      bubbles.forEach(x=> x.classList.remove("correct","wrong"));
+
+      if(miniState.questionIndex >= miniQuestions.length){
+        miniFlash.className = "flash good";
+        miniFlash.innerHTML = `🎉 Mini Game selesai! Lanjutkan ke Kuis Sad Darsana di bawah.`;
+        return;
+      }
+      const q = miniQuestions[miniState.questionIndex];
+      miniFlash.className = "flash warn";
+      miniFlash.innerHTML = q.prompt + " Klik gelembungnya ya!";
+      // (prompt is shown in flash; bubble click logic stays)
+    }
+
+    // ===================== Quiz =====================
+    // 5 soal pilihan ganda sesuai LKPD latihan materi.
+    const quizData = [
+      {
+        q: "Istilah yang digunakan untuk menyebut sistem filsafat dalam tradisi Hindu adalah …",
+        options: ["Darsana","Yajña","Dharma","Samsara"],
+        correctIndex: 0
+      },
+      {
+        q: "Enam sistem filsafat Hindu dikenal dengan istilah …",
+        options: ["Catur Marga","Sad Darsana","Tri Kaya Parisudha","Panca Sradha"],
+        correctIndex: 1
+      },
+      {
+        q: "Sistem Darsana yang memberikan perhatian besar terhadap logika dan penalaran adalah …",
+        options: ["Yoga","Mimamsa","Nyaya","Vedanta"],
+        correctIndex: 2
+      },
+      {
+        q: "Tokoh yang secara tradisional dikaitkan dengan Samkhya adalah …",
+        options: ["Rsi Jaimini","Rsi Kapila","Rsi Patanjali","Rsi Gautama"],
+        correctIndex: 1
+      },
+      {
+        q: "Mimamsa memberikan perhatian besar terhadap …",
+        options: ["Weda, kewajiban, dan pelaksanaan tindakan keagamaan",
+                 "struktur atom modern",
+                 "seni pertunjukan",
+                 "ilmu pengobatan"],
+        correctIndex: 0
+      },
+      {
+        q: "Vedanta memiliki hubungan erat dengan …",
+        options: ["Dhanurveda","Upanisad","Jyotisa","Chanda"],
+        correctIndex: 1
+      }
+    ];
+
+    const quizList = document.getElementById("quizList");
+    const quizForm = document.getElementById("quizForm");
+
+    let quizState = {
+      answers: new Array(quizData.length).fill(null),
+      submitted: false,
+      score: 0
+    };
+
+    function renderQuiz(){
+      quizList.innerHTML = "";
+      quizData.forEach((item, i)=>{
+        const qCard = document.createElement("div");
+        qCard.className = "qCard";
+
+        const letters = ["A","B","C","D"];
+        let opts = item.options;
+
+        // if options length > 4, handle more letters (not needed here)
+        const optLetters = opts.map((_, idx)=> String.fromCharCode(65+idx));
+
+        qCard.innerHTML = `
+          <div class="qTop">
+            <div class="qTitle">Q${i+1}. ${item.q}</div>
+            <div style="color:var(--muted);font-weight:800;font-size:12px;">Pilih salah satu</div>
+          </div>
+          <div class="options">
+            ${opts.map((opt, idx)=> `
+              <label class="opt">
+                <input type="radio" name="q${i}" value="${idx}" />
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                  <div style="font-weight:950;">${optLetters[idx]}. ${opt}</div>
+                </div>
+              </label>
+            `).join("")}
+          </div>
+          <div class="feedback" id="fb${i}" style="display:none;"></div>
+        `;
+        quizList.appendChild(qCard);
+
+        // listen selection
+        const radios = qCard.querySelectorAll(`input[name="q${i}"]`);
+        radios.forEach(r=>{
+          r.addEventListener("change", ()=>{
+            quizState.answers[i] = parseInt(r.value, 10);
+            if(quizState.submitted) {
+              // optional: update feedback live; keep simple: do nothing until submit
+            }
+          });
+        });
+      });
+    }
+
+    function submitQuiz(){
+      quizState.submitted = true;
+      quizState.score = 0;
+
+      quizData.forEach((item, i)=>{
+        const fb = document.getElementById(`fb${i}`);
+        const chosen = quizState.answers[i];
+
+        if(chosen === null){
+          fb.style.display = "block";
+          fb.className = "feedback warn";
+          fb.textContent = "⏳ Kamu belum memilih jawaban.";
+          return;
+        }
+
+        if(chosen === item.correctIndex){
+          quizState.score += 2; // 2 poin per soal benar (total 12 poin)
+          fb.style.display = "block";
+          fb.className = "feedback good";
+          fb.textContent = "✅ Benar! Lanjutkan!";
+        } else {
+          fb.style.display = "block";
+          fb.className = "feedback bad";
+          fb.textContent = "❌ Salah. Ayo pahami lagi konsep di LKPD ya.";
+        }
+      });
+
+      // Convert score to total scale
+      // mini max = 2, quiz max = 12 => total max 14 in this draft
+      // But interpretation text earlier used 20; let's adjust it to 14 by editing text.
+      // We'll keep UI robust:
+      syncScoreBig();
+      updateScoreUI();
+      // also update note
+      document.getElementById("scoreNote").textContent =
+        `Kuis selesai! Skor kuis: ${quizState.score}. Mini game: ${miniState.score}.`;
+    }
+
+    function clearQuiz(){
+      quizState.answers = new Array(quizData.length).fill(null);
+      quizState.submitted = false;
+      quizState.score = 0;
+
+      quizData.forEach((_, i)=>{
+        const fb = document.getElementById(`fb${i}`);
+        fb.style.display = "none";
+        const checked = document.querySelector(`input[name="q${i}"]:checked`);
+        if(checked) checked.checked = false;
+      });
+
+      syncScoreBig();
+      updateScoreUI();
+      document.getElementById("scoreNote").textContent = "Kuis dapat dikerjakan lagi!";
+    }
+
+    // score syncing
+    function syncScoreBig(){
+      const total = miniState.score + quizState.score;
+      document.getElementById("scoreBig").textContent = total;
+    }
+
+    function updateScoreUI(){
+      document.getElementById("miniScoreCell").textContent = miniState.score;
+      document.getElementById("quizScoreCell").textContent = quizState.score;
+      document.getElementById("totalScoreCell").textContent = miniState.score + quizState.score;
+
+      const total = miniState.score + quizState.score;
+      const finalText = document.getElementById("finalResultText");
+
+      if(!quizState.submitted && miniState.score === 0){
+        finalText.innerHTML = "Skor akhir akan muncul setelah kamu bermain Mini Game dan mengerjakan Kuis.";
+        return;
+      }
+
+      let grade;
+      if(total <= 4) grade = "🌊 Level Pemula — ulangi konsep utama tiap darsana.";
+      else if(total <= 8) grade = "🧠 Level Berkembang — mulai hubungkan darsana dengan contoh nyata.";
+      else grade = "✨ Level Mantap — kamu sudah memahami Sad Darsana dengan baik!";
+
+      finalText.innerHTML = `Skor akhir kamu: <b>${total}</b> — ${grade}`;
+    }
+
+    function resetQuest(){
+      miniState = { questionIndex: 0, score: 0, answered: false };
+      quizState = { answers: new Array(quizData.length).fill(null), submitted: false, score: 0 };
+
+      bubbles.forEach(x=> x.classList.remove("correct","wrong"));
+
+      const q = miniQuestions[miniState.questionIndex];
+      miniFlash.className = "flash warn";
+      miniFlash.innerHTML = q.prompt + " Klik gelembungnya ya!";
+
+      clearQuiz(); // also resets quiz visuals & score
+
+      syncScoreBig();
+      updateScoreUI();
+      document.getElementById("scoreNote").textContent = "Quest direset! Main dari awal ya.";
+    }
+
+    // ===================== Reflection download =====================
+    function downloadReflection(){
+      const payload = [
+        "Refleksi MPI Darsana — Laut Biru",
+        "------------------------------",
+        `1) ${document.getElementById("ref1").value || "-"}`,
+        `2) ${document.getElementById("ref2").value || "-"}`,
+        `3) ${document.getElementById("ref3").value || "-"}`,
+        `4) ${document.getElementById("ref4").value || "-"}`,
+        "",
+        "Catatan: Isi dapat diedit sebelum dikumpulkan."
+      ].join("\n");
+
+      const blob = new Blob([payload], {type:"text/plain;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Refleksi_MPI_Darsana.txt";
+      a.click();
+
+      URL.revokeObjectURL(url);
+    }
+
+    // ===================== Init =====================
+    function nextMiniGame(){
+      // overwrite duplicate function safety: ensure only one definition
+      miniState.questionIndex++;
+      miniState.answered = false;
+
+      bubbles.forEach(x=> x.classList.remove("correct","wrong"));
+
+      if(miniState.questionIndex >= miniQuestions.length){
+        miniFlash.className = "flash good";
+        miniFlash.innerHTML = `🎉 Mini Game selesai! Lanjutkan ke Kuis Sad Darsana di bawah.`;
+        return;
+      }
+
+      const q = miniQuestions[miniState.questionIndex];
+      miniFlash.className = "flash warn";
+      miniFlash.innerHTML = q.prompt + " Klik gelembungnya ya!";
+    }
+
+    // Start mini prompt
+    function startMini(){
+      const q = miniQuestions[miniState.questionIndex];
+      miniFlash.className = "flash warn";
+      miniFlash.innerHTML = q.prompt + " Klik gelembungnya ya! ";
+    }
+
+    renderQuiz();
+    startMini();
+    syncScoreBig();
+    updateScoreUI();
+
+    // Provide global functions for button onclick
+    window.goTo = goTo;
+    window.submitQuiz = submitQuiz;
+    window.clearQuiz = clearQuiz;
+    window.resetQuest = resetQuest;
+    window.nextMiniGame = nextMiniGame;
+    window.downloadReflection = downloadReflection;
+  </script>
+</body>
+</html>
